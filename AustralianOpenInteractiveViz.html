@@ -122,17 +122,17 @@
     <div id="years"> Select a year
        <select id="mySelect" onchange="setyear()">
           <option value="" selected="selected">Choose here</option>
-          <option value="2004.json">2004</option>
-          <option value="2005.json">2005</option>
-          <option value="2006.json">2006</option>
-          <option value="2007.json">2007</option>
-          <option value="2008.json">2008</option>
-          <option value="2009.json">2009</option>
-          <option value="2010.json">2010</option>
-          <option value="2011.json">2011</option>
-          <option value="2012.json">2012</option>
-          <option value="2013.json">2013</option>
-          <option value="2014.json">2014</option>
+          <option value="https://raw.githubusercontent.com/SagarParekh/Australian_Open_Interactive_Viz/master/2004.json">2004</option>
+          <option value="https://raw.githubusercontent.com/SagarParekh/Australian_Open_Interactive_Viz/master/2005.json">2005</option>
+          <option value="https://raw.githubusercontent.com/SagarParekh/Australian_Open_Interactive_Viz/master/2006.json">2006</option>
+          <option value="https://raw.githubusercontent.com/SagarParekh/Australian_Open_Interactive_Viz/master/2007.json">2007</option>
+          <option value="https://raw.githubusercontent.com/SagarParekh/Australian_Open_Interactive_Viz/master/2008.json">2008</option>
+          <option value="https://raw.githubusercontent.com/SagarParekh/Australian_Open_Interactive_Viz/master/2009.json">2009</option>
+          <option value="https://raw.githubusercontent.com/SagarParekh/Australian_Open_Interactive_Viz/master/2010.json">2010</option>
+          <option value="https://raw.githubusercontent.com/SagarParekh/Australian_Open_Interactive_Viz/master/2011.json">2011</option>
+          <option value="https://raw.githubusercontent.com/SagarParekh/Australian_Open_Interactive_Viz/master/2012.json">2012</option>
+          <option value="https://raw.githubusercontent.com/SagarParekh/Australian_Open_Interactive_Viz/master/2013.json">2013</option>
+          <option value="https://raw.githubusercontent.com/SagarParekh/Australian_Open_Interactive_Viz/master/2014.json">2014</option>
         </select>
     </div>
     <div id="dialog" title="ReadMe">
@@ -161,7 +161,7 @@
 });
       } );
     </script>
-    <script>    
+    <script>
         function setyear(){
             d3.select("svg").remove();
             var setval=document.getElementById("mySelect").value;
@@ -289,11 +289,11 @@
                   d3.select("#result").html("")
                   d3.select("#stage").html("")
                   d3.select("#score").html("")
-                    })   
+                    })
             });
 
             function disp(d){
-                if(d.data.stage1=="Champion") 
+                if(d.data.stage1=="Champion")
                     {return d.data.stage1 + ":\n" + d.data.name}
                     else{
                         return d.data.name
@@ -331,6 +331,6 @@
                 }
             }
         }
-        
+
     </script>
 </body>
