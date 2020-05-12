@@ -1,0 +1,336 @@
+<head>
+    <style>
+        body {
+            font-family: Sans-serif;
+            font-size: 11px;
+        }
+
+        .slice {
+            cursor: pointer;
+        }
+
+        .slice .main-arc {
+            stroke: #fff;
+            stroke-width: 1px;
+        }
+
+        .slice .hidden-arc {
+            fill: none;
+        }
+
+        .slice text {
+            pointer-events: none;
+            dominant-baseline: middle;
+            text-anchor: middle;
+            font-size: 13px;
+        }
+        #stage {
+            position: absolute;
+            left: 1100px;
+            top: 10px;
+            width: 400px;
+            font-size: 20px;
+            font-weight: 500;
+        }
+        #result {
+            position: absolute;
+            left: 1100px;
+            top: 40px;
+            width: 400px;
+            font-size: 18px;
+            font-weight: 200;
+        }
+
+        #score {
+            position: absolute;
+            left: 1100px;
+            top: 60px;
+            width: 400px;
+            font-size: 30px;
+            font-weight: 500;
+        }
+
+        #p1 {
+            position: absolute;
+            left: 1100px;
+            top: 100px;
+            width: 400px;
+            font-size: 18px;
+            font-weight: 200;
+        }
+
+        #error {
+          position: absolute;
+          left: 1100px;
+          top: 120px;
+          width: 400px;
+          font-size: 18px;
+          font-weight: 200;
+        }
+
+        #ace {
+          position: absolute;
+          left: 1100px;
+          top: 140px;
+          width: 400px;
+          font-size: 18px;
+          font-weight: 200;
+        }
+
+        #title div.large, #title span.large {
+            font-size: 38px;
+        }
+
+        #title {
+          position: absolute;
+          top: 10px;
+          left: 20px;
+          font-size: 28px;
+          font-weight: 100;
+        }
+        #title .large {
+          width: 250px;
+        }
+
+        #diag{
+            width: 860px;
+            height: 650px;
+        }
+
+        #years{
+            position: absolute;
+            top: 50px;
+            left: 20px;
+            font-size: 16px;
+        }
+
+        #dialog{
+            font-size: 14px;
+        }
+
+    </style>
+    <script src='https://d3js.org/d3.v4.min.js'></script>
+      <script src="https://code.jquery.com/jquery-1.12.4.js"></script>
+  <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+  <link rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+</head>
+<body>
+    <div id="title">
+      <div>Australian Open (Mens)</div>
+    </div>
+    <br>
+    <div id="years"> Select a year
+       <select id="mySelect" onchange="setyear()">
+          <option value="" selected="selected">Choose here</option>
+          <option value="2004.json">2004</option>
+          <option value="2005.json">2005</option>
+          <option value="2006.json">2006</option>
+          <option value="2007.json">2007</option>
+          <option value="2008.json">2008</option>
+          <option value="2009.json">2009</option>
+          <option value="2010.json">2010</option>
+          <option value="2011.json">2011</option>
+          <option value="2012.json">2012</option>
+          <option value="2013.json">2013</option>
+          <option value="2014.json">2014</option>
+        </select>
+    </div>
+    <div id="dialog" title="ReadMe">
+      <p>It has always been difficult for me to see the rise of all the players in a concised form in a tennis tournament. So I decided to create a zoomable sunburst diagram for it. A sunburst is similar to a treemap, except it uses a radial layout.</p>
+
+        <p>The innermost circle represents the champion of the tournament. The circle outer to it shows the players who have reached the finals and so on. You can hover over a player's arc to see which level(round) is it. </p>
+
+        <p>If you click on a particular arc it will zoom the sunburst to that particular level and will show you winners of the rounds below it. If you click the center-most circle at a zoomed in level it will zoom out by 1 level. If you click anywhere else on the page (outside the sunburst) it will zoom out to the outermost level (champion). </p>
+
+        <p> Also if you hover over any arc it gives you ifnormation about how that player reached the particular round. Basically it tells you who the player defeated in the previous round, the results of the previous round, how many more/less aces did the winner score and how many more/less errors did the winner commit.</p>
+    </div>
+
+    <div id="stage"></div>
+    <div id="result"></div>
+    <div id="score"></div>
+    <div id="p1"></div>
+    <div id="error"></div>
+    <div id="ace"></div>
+    <br>
+    <div id="diag">
+    </div>
+    <script>
+      $( function() {
+        $( "#dialog" ).dialog({
+  position: { my: "left top", at: "left bottom", of: window }
+});
+      } );
+    </script>
+    <script>    
+        function setyear(){
+            d3.select("svg").remove();
+            var setval=document.getElementById("mySelect").value;
+            console.log(setval);
+
+        // const width = window.innerWidth,
+        // height = window.innerHeight,
+        const width = 860,
+        height = 650,
+        maxRadius = (Math.min(width, height) / 2) - 5;
+
+        const formatNumber = d3.format(',d');
+
+        const x = d3.scaleLinear()
+            .range([0, 2 * Math.PI])
+            .clamp(true);
+
+        const y = d3.scaleSqrt()
+            .range([maxRadius*.1, maxRadius]);
+
+        const color = d3.scaleOrdinal(d3.schemeCategory20);
+
+        const partition = d3.partition();
+
+        const arc = d3.arc()
+            .startAngle(d => x(d.x0))
+            .endAngle(d => x(d.x1))
+            .innerRadius(d => Math.max(0, y(d.y0)))
+            .outerRadius(d => Math.max(0, y(d.y1)));
+
+        const middleArcLine = d => {
+            const halfPi = Math.PI/2;
+            const angles = [x(d.x0) - halfPi, x(d.x1) - halfPi];
+            const r = Math.max(0, (y(d.y0) + y(d.y1)) / 2);
+
+            const middleAngle = (angles[1] + angles[0]) / 2;
+            const invertDirection = middleAngle > 0 && middleAngle < Math.PI; // On lower quadrants write text ccw
+            if (invertDirection) { angles.reverse(); }
+
+            const path = d3.path();
+            path.arc(0, 0, r, angles[0], angles[1], invertDirection);
+            return path.toString();
+        };
+
+            const textFits = d => {
+            const CHAR_SPACE = 6;
+
+            const deltaAngle = x(d.x1) - x(d.x0);
+            const r = Math.max(0, (y(d.y0) + y(d.y1)) / 2);
+            const perimeter = r * deltaAngle;
+
+            return d.data.name.length * CHAR_SPACE < perimeter;
+            };
+
+            const svg = d3.select('#diag').append('svg')
+            .style('width', '100vw')
+            .style('height', '90vh')
+            .attr('viewBox', `${-width / 2} ${-height / 2} ${width} ${height}`)
+            .on('click', () => focusOn()); // Reset zoom on canvas click
+            d3.json(setval, (error, root) => {
+                if (error) throw error;
+
+                // console.log("Inside json"+setval);
+                root = d3.hierarchy(root);
+                root.sum(d => d.size);
+
+                const slice = svg.selectAll('g.slice')
+                    .data(partition(root).descendants());
+
+                slice.exit().remove();
+
+                const newSlice = slice.enter()
+                    .append('g').attr('class', 'slice')
+                    .on('click', d => {
+                        d3.event.stopPropagation();
+                        focusOn(d);
+                    });
+
+                newSlice.append('title')
+                    .text(d => d.data.name + '\n' + d.data.stage1);
+
+                newSlice.append('path')
+                    .attr('class', 'main-arc')
+                    .style('fill', d => color((d.children ? d : d.parent).data.name))
+                    .attr('d', arc);
+
+                newSlice.append('path')
+                    .attr('class', 'hidden-arc')
+                    .attr('id', (_, i) => `hiddenArc${i}`)
+                    .attr('d', middleArcLine);
+
+                const text = newSlice.append('text')
+                    .attr('display', d => textFits(d) ? null : 'none');
+
+                text.append('textPath')
+                    .attr('startOffset','50%')
+                    .attr('xlink:href', (_, i) => `#hiddenArc${i}` )
+                    .text(d => disp(d))
+
+                svg.selectAll('g').attr('d', arc)
+                .on("mouseover", function(d){
+                  d3.select("#stage").html("Results of "+d.data.stage2);
+                  d3.select("#result").html(d.data.name + " beat " + (d.data.name == d.data.children[1].name ? d.data.children[0].name : d.data.children[1].name));
+                  d3.select("#score").html(d.data.result);
+                  d3.select("#p1").html(d.data.name);
+                  var err = d.data.error1 - d.data.error2;
+                  if (err >= 0){
+                    d3.select("#error").html("<font color=\"red\">" + err + " unforced errors</font>");
+                  }else{
+                    d3.select("#error").html("<font color=\"green\">" + Math.abs(err) + " unforced errors</font>");
+                  }
+                  var a = d.data.ace1 - d.data.ace2;
+                  if (a >= 0){
+                    d3.select("#ace").html("<font color=\"green\">"+a + " aces</font>");
+                  }else{
+
+                    d3.select("#ace").html("<font color=\"red\">" + Math.abs(a) + " aces</font>");
+                  }
+                }
+                )
+                .on("mouseout", function(d){
+                  d3.select("#error").html("")
+                  d3.select("#ace").html("")
+                  d3.select("#p1").html("")
+                  d3.select("#result").html("")
+                  d3.select("#stage").html("")
+                  d3.select("#score").html("")
+                    })   
+            });
+
+            function disp(d){
+                if(d.data.stage1=="Champion") 
+                    {return d.data.stage1 + ":\n" + d.data.name}
+                    else{
+                        return d.data.name
+                    }
+            }
+
+            function focusOn(d = { x0: 0, x1: 1, y0: 0, y1: 1 }) {
+                // Reset to top-level if no data point specified
+
+                const transition = svg.transition()
+                    .duration(750)
+                    .tween('scale', () => {
+                        const xd = d3.interpolate(x.domain(), [d.x0, d.x1]),
+                            yd = d3.interpolate(y.domain(), [d.y0, 1]);
+                        return t => { x.domain(xd(t)); y.domain(yd(t)); };
+                    });
+
+                transition.selectAll('path.main-arc')
+                    .attrTween('d', d => () => arc(d));
+
+                transition.selectAll('path.hidden-arc')
+                    .attrTween('d', d => () => middleArcLine(d));
+
+                transition.selectAll('text')
+                    .attrTween('display', d => () => textFits(d) ? null : 'none');
+
+                moveStackToFront(d);
+
+                function moveStackToFront(elD) {
+                    svg.selectAll('.slice').filter(d => d === elD)
+                        .each(function(d) {
+                            this.parentNode.appendChild(this);
+                            if (d.parent) { moveStackToFront(d.parent); }
+                        })
+                }
+            }
+        }
+        
+    </script>
+</body>
