@@ -7,5 +7,5 @@ How to Run:
 	Place the Australian_Open_Interactive_Viz folder inside:
 		Tomcat -> webapps -> ROOT 
 
-	Open the browser and type : http://localhost:8080/tennis/AustralianOpenInteractiveViz.html
+	Open the browser and type : http://localhost:8080/Australian_Open_Interactive_Viz/AustralianOpenInteractiveViz.html
 	(8080 here is the port assigned to localhost)
